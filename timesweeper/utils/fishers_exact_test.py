@@ -1,37 +1,36 @@
 from scipy import stats
-import allel
+import numpy as np
+import snp_utils as su
 
 
-def fet_alleles(ts_list, max_allele):
+def fet(maj_counts, min_counts):
     """
-    Test for significant change in allele between the start and the end of
-    measurement using Fisher exact test .
+    Run Fisher's exact test using minor allele frequency vector given by prep_ts_aft.add()
 
     Args:
-        ts_list (list[np.arr]): time-serialized list of arrays of SNP or haplotype data.
-                                organized with split_arr().
-        max_allele???
+        maf_vector (list[float]): Time-series of allele frequencies for highest velocity allele in a given SNP.add()
+
     Returns:
-        float: fisher-exact-test p-value result.
+        float: p-value, result of FET on first and last minor/major allele frequency contingency table.
     """
+    return stats.fisher_exact(
+        [
+            [maj_counts[0], maj_counts[-1]],
+            [min_counts[0], min_counts[-1]],
+        ]
+    )[1]
 
-    # ts_list = allel.GenotypeArray(ts_list)
-    ## Get first and last geno in the sampled data
-    last_genos = allel.GenotypeArray(geno_list[-1]).count_alleles(max_allele=1)
-    first_genos = allel.GenotypeArray(geno_list[0]).count_alleles(max_allele=1)
 
-    ## Calculate the changes in geno counts
-    diff_genos_count = last_genos - first_genos
+def test_fet():
+    maj_counts = np.random.randint(0, 20, (20))
+    min_counts = np.random.randint(0, 5, (20))
+    fish_res = fet(maj_counts, min_counts)
+    print(fish_res)
 
-    ## Get the index of the major allele
-    major_allele_index = np.argmax(diff_genos_count, axis=1)
 
-    ## Get the total count for major and minor index
-    major_counts = sum(diff_ts_count[major_index])
-    minor_counts = sum(np.delete(diff_ts_count, major_index,axis=0))
+def main():
+    test_fet()
 
-    ## Perform fisher's exact test
-    fet_or, fet_p_val = stats.fisher_exact(np.array([abs(major_counts),
-                                                     abs(minor_counts)]))
-                                                     
-    return fet_p_val
+
+if __name__ == "__main__":
+    main()
